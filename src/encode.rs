@@ -4,28 +4,7 @@ use super::Color;
 use super::Color::*;
 use atools::prelude::*;
 use bites::*;
-
-trait W<T>: Write {
-    fn w(&mut self, x: T) -> io::Result<()>;
-}
-
-impl<T: Write, const N: usize> W<[u8; N]> for T {
-    fn w(&mut self, x: [u8; N]) -> io::Result<()> {
-        self.write_all(&x)
-    }
-}
-
-impl<T: Write> W<u8> for T {
-    fn w(&mut self, x: u8) -> io::Result<()> {
-        self.w([x])
-    }
-}
-
-impl<T: Write> W<u32> for T {
-    fn w(&mut self, x: u32) -> io::Result<()> {
-        self.w(x.to_le_bytes())
-    }
-}
+use raad::le::*;
 
 /// uses the so-called `BITMAPINFOHEADER`
 const DIB_HEADER_SIZE: u32 = 40;
@@ -141,7 +120,7 @@ pub fn encode(
             .rev()
             .try_for_each(|mut x| {
                 x.try_for_each(|x| to.w(x))?;
-                to.write_all(&[0; 4][..width as usize % 4])
+                to.w(&[0; 4][..width as usize % 4])
             })?;
 
         Ok(())
@@ -156,7 +135,7 @@ pub fn encode(
             .rev()
             .try_for_each(|mut x| {
                 x.try_for_each(|x| to.w(x))?;
-                to.write_all(&[0; 4][..width as usize % 4])
+                to.w(&[0; 4][..width as usize % 4])
             })?;
 
         Ok(())
@@ -165,8 +144,8 @@ pub fn encode(
     fn y(width: u32, data: &[u8], to: &mut impl Write) -> io::Result<()> {
         to.w(GRAY)?;
         data.chunks_exact(width as _).rev().try_for_each(|row| {
-            to.write_all(row)?;
-            to.write_all(&[0; 4][..width as usize % 4])
+            to.w(row)?;
+            to.w(&[0; 4][..width as usize % 4])
         })?;
         Ok(())
     }

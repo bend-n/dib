@@ -1,46 +1,12 @@
 use crate::until::Until;
 use crate::Color;
 use atools::prelude::*;
+use raad::le::*;
 use std::intrinsics::unlikely;
 use std::io::{self, Read};
 use std::iter::{repeat, repeat_with};
 use std::mem::MaybeUninit as MU;
 use std::{error, fmt};
-
-trait R {
-    fn r<T: Readable>(&mut self) -> std::io::Result<T>;
-}
-
-impl<D: Read> R for D {
-    fn r<T: Readable>(&mut self) -> std::io::Result<T> {
-        T::r(self)
-    }
-}
-
-trait Readable
-where
-    Self: Sized,
-{
-    fn r(from: &mut impl Read) -> std::io::Result<Self>;
-}
-
-impl<const N: usize> Readable for [u8; N] {
-    fn r(from: &mut impl Read) -> std::io::Result<[u8; N]> {
-        let mut buf = [0; N];
-        from.read_exact(&mut buf).map(|()| buf)
-    }
-}
-
-macro_rules! n {
-    ($($n:ident)+) => {
-        $(impl Readable for $n {
-            fn r(from: &mut impl Read) -> std::io::Result<$n> {
-                <[u8; { std::mem::size_of::<$n>() }]>::r(from).map($n::from_le_bytes)
-            }
-        })+
-    };
-}
-n![u8 u16 u32 u64 u128 i8 i16 i32 i64 i128];
 
 pub const CORE_HEADER_SIZE: u32 = 12;
 pub const DIB_HEADER_SIZE: u32 = 40;
